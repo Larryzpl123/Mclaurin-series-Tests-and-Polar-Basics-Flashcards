@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AP BC Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:#0f0f13;color:#e8e6e1;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+h1{font-family:'Space Mono',monospace;font-size:1.4rem;margin:20px 0 8px;letter-spacing:-0.5px;color:#c4f74a}
+.subtitle{font-size:0.85rem;color:#777;margin-bottom:24px}
+.tabs{display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap;justify-content:center}
+.tab{padding:8px 16px;border-radius:20px;border:1px solid #2a2a35;background:transparent;color:#888;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.82rem;transition:all .2s}
+.tab:hover{border-color:#555;color:#ccc}
+.tab.active{background:#c4f74a;color:#0f0f13;border-color:#c4f74a;font-weight:700}
+.card-container{perspective:1000px;width:100%;max-width:480px;height:300px;margin-bottom:24px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.card{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .5s cubic-bezier(.4,.2,.2,1)}
+.card.flipped{transform:rotateY(180deg)}
+.card-face{position:absolute;width:100%;height:100%;backface-visibility:hidden;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
+.card-front{background:linear-gradient(145deg,#1a1a24,#22222f);border:1px solid #2a2a35;box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.card-back{background:linear-gradient(145deg,#1c2618,#1a2a16);border:1px solid #3a5a2a;transform:rotateY(180deg);box-shadow:0 8px 32px rgba(0,0,0,.4)}
+.card-label{font-size:.65rem;text-transform:uppercase;letter-spacing:2px;color:#c4f74a;margin-bottom:16px;font-family:'Space Mono',monospace}
+.card-front .card-label{color:#c4f74a}
+.card-back .card-label{color:#8fbf6a}
+.card-text{font-size:1.15rem;line-height:1.6;font-weight:500}
+.card-back .card-text{font-size:1.05rem;color:#d4ecc4}
+.formula{font-family:'Space Mono',monospace;font-size:1rem;background:rgba(196,247,74,.08);padding:6px 14px;border-radius:8px;margin:6px 0;display:inline-block;letter-spacing:-0.3px}
+.card-back .formula{background:rgba(143,191,106,.12)}
+.hint{font-size:.75rem;color:#555;margin-top:auto;font-style:italic}
+.controls{display:flex;gap:12px;align-items:center;margin-bottom:16px}
+.btn{width:48px;height:48px;border-radius:50%;border:1px solid #2a2a35;background:#18181f;color:#e8e6e1;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.btn:hover{background:#c4f74a;color:#0f0f13;border-color:#c4f74a}
+.counter{font-family:'Space Mono',monospace;font-size:.85rem;color:#555;min-width:80px;text-align:center}
+.progress{width:100%;max-width:480px;height:3px;background:#1a1a24;border-radius:2px;margin-bottom:12px;overflow:hidden}
+.progress-bar{height:100%;background:#c4f74a;border-radius:2px;transition:width .3s}
+.know-row{display:flex;gap:10px;justify-content:center}
+.know-btn{padding:10px 24px;border-radius:10px;border:1px solid #2a2a35;background:#18181f;color:#aaa;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85rem;transition:all .15s}
+.know-btn.got-it:hover{background:#2a5a1a;border-color:#4a8a3a;color:#c4f74a}
+.know-btn.nope:hover{background:#5a1a1a;border-color:#8a3a3a;color:#ff6b6b}
+.score{font-family:'Space Mono',monospace;font-size:.75rem;color:#555;margin-top:12px}
+</style>
+</head>
+<body>
+
+<h1>AP BC FLASHCARDS</h1>
+<p class="subtitle">tap card to flip · arrows to navigate</p>
+
+<div class="tabs" id="tabs"></div>
+<div class="progress"><div class="progress-bar" id="prog"></div></div>
+<div class="card-container" id="cc"><div class="card" id="card">
+  <div class="card-face card-front"><span class="card-label" id="fl">QUESTION</span><div class="card-text" id="ft"></div><div class="hint">tap to reveal</div></div>
+  <div class="card-face card-back"><span class="card-label" id="bl">ANSWER</span><div class="card-text" id="bt"></div></div>
+</div></div>
+<div class="controls">
+  <button class="btn" id="prev">←</button>
+  <span class="counter" id="ctr">1 / 1</span>
+  <button class="btn" id="next">→</button>
+</div>
+<div class="know-row">
+  <button class="know-btn nope" id="nope">Still learning ✗</button>
+  <button class="know-btn got-it" id="gotit">Got it ✓</button>
+</div>
+<div class="score" id="score"></div>
+
+<script>
+const decks={
+"Polar ↔ Rect":[
+{q:"Polar → Rectangular<br>How to get x?",a:'<span class="formula">x = r cos θ</span>'},
+{q:"Polar → Rectangular<br>How to get y?",a:'<span class="formula">y = r sin θ</span>'},
+{q:"Rectangular → Polar<br>How to get r?",a:'<span class="formula">r² = x² + y²</span><br>(take ± square root)'},
+{q:"Rectangular → Polar<br>How to get θ?",a:'<span class="formula">tan θ = y / x</span><br>(check the quadrant!)'},
+{q:"Convert r = 4sinθ<br>to rectangular",a:'Multiply both sides by r:<br><span class="formula">r² = 4r sinθ</span><br><span class="formula">x² + y² = 4y</span><br>Circle centered at (0,2), radius 2'},
+{q:"Convert x² + y² = 9<br>to polar",a:'<span class="formula">r² = 9 → r = 3</span><br>Circle of radius 3'},
+{q:"What does r = a cosθ<br>look like?",a:'Circle of diameter |a|<br>centered at <span class="formula">(a/2, 0)</span><br>on the x-axis'},
+{q:"What does r = a sinθ<br>look like?",a:'Circle of diameter |a|<br>centered at <span class="formula">(0, a/2)</span><br>on the y-axis'},
+{q:"What does a negative r mean?",a:'Plot the point in the<br><b>opposite direction</b> of θ.<br>(-2, π/4) = (2, 5π/4)'},
+],
+"dy/dx Polar":[
+{q:"dy/dx formula for<br>polar curves",a:'<span class="formula">dy/dx = (r\'sinθ + rcosθ) / (r\'cosθ − rsinθ)</span><br><br>where r\' = dr/dθ'},
+{q:"Where does dy/dθ come from?",a:'y = r sinθ → product rule:<br><span class="formula">dy/dθ = r\'sinθ + rcosθ</span>'},
+{q:"Where does dx/dθ come from?",a:'x = r cosθ → product rule:<br><span class="formula">dx/dθ = r\'cosθ − rsinθ</span>'},
+{q:"Horizontal tangent condition<br>(polar)",a:'<span class="formula">dy/dθ = 0</span> AND <span class="formula">dx/dθ ≠ 0</span>'},
+{q:"Vertical tangent condition<br>(polar)",a:'<span class="formula">dx/dθ = 0</span> AND <span class="formula">dy/dθ ≠ 0</span>'},
+{q:"If both dy/dθ = 0 and dx/dθ = 0,<br>what happens?",a:'<b>Indeterminate.</b><br>Use L\'Hôpital\'s or further analysis.<br>NOT automatically horizontal.'},
+{q:"Tangent line at the origin<br>when r(α) = 0?",a:'The tangent line is just<br><span class="formula">θ = α</span><br>(line through origin at angle α)<br>i.e. y = x·tan(α)'},
+{q:"Find tangent lines at origin<br>for r = sin(3θ). How?",a:'Set sin(3θ) = 0<br>3θ = 0, π, 2π, 3π...<br>θ = 0, π/3, 2π/3, π<br><b>3 unique lines</b> (opposites pair up)'},
+],
+"Maclaurin Series":[
+{q:"Maclaurin series for eˣ",a:'<span class="formula">eˣ = Σ xⁿ/n!</span><br>= 1 + x + x²/2! + x³/3! + ...<br>Converges for all x'},
+{q:"Maclaurin series for sin x",a:'<span class="formula">sin x = Σ (-1)ⁿ x²ⁿ⁺¹/(2n+1)!</span><br>= x − x³/3! + x⁵/5! − ...<br>Odd powers only'},
+{q:"Maclaurin series for cos x",a:'<span class="formula">cos x = Σ (-1)ⁿ x²ⁿ/(2n)!</span><br>= 1 − x²/2! + x⁴/4! − ...<br>Even powers only'},
+{q:"Maclaurin series for 1/(1−x)",a:'<span class="formula">1/(1−x) = Σ xⁿ</span><br>= 1 + x + x² + x³ + ...<br>|x| < 1'},
+{q:"Maclaurin series for ln(1+x)",a:'<span class="formula">ln(1+x) = Σ (-1)ⁿ⁺¹ xⁿ/n</span><br>= x − x²/2 + x³/3 − ...<br>−1 < x ≤ 1'},
+{q:"How to get series for e^(−x²)?",a:'Start with eˣ = Σ xⁿ/n!<br>Replace x with −x²:<br><span class="formula">e^(−x²) = 1 − x² + x⁴/2! − x⁶/3! + ...</span>'},
+{q:"How to get series for sin(2x)?",a:'Start with sin x = x − x³/3! + ...<br>Replace x with 2x:<br><span class="formula">sin(2x) = 2x − (2x)³/3! + (2x)⁵/5! − ...</span><br>= 2x − 8x³/6 + 32x⁵/120 − ...'},
+{q:"How to get series for 1/(1+x³)?",a:'Start with 1/(1−x) = Σ xⁿ<br>Replace x with −x³:<br><span class="formula">1/(1+x³) = 1 − x³ + x⁶ − x⁹ + ...</span>'},
+{q:"General Maclaurin series formula",a:'<span class="formula">f(x) = Σ f⁽ⁿ⁾(0)/n! · xⁿ</span><br><br>= f(0) + f\'(0)x + f\'\'(0)x²/2! + ...'},
+],
+"Series Tests":[
+{q:"nth Term Test<br>(Divergence Test)",a:'If <span class="formula">lim aₙ ≠ 0</span>, the series <b>diverges</b>.<br><br>⚠️ If limit = 0, test is <b>inconclusive</b>. Does NOT prove convergence.'},
+{q:"Geometric Series<br>Σ arⁿ",a:'Converges if <span class="formula">|r| < 1</span><br>Sum = <span class="formula">a/(1−r)</span><br><br>Diverges if |r| ≥ 1'},
+{q:"p-Series<br>Σ 1/nᵖ",a:'Converges if <span class="formula">p > 1</span><br>Diverges if <span class="formula">p ≤ 1</span><br><br>p = 1 is the harmonic series (diverges)'},
+{q:"Ratio Test",a:'<span class="formula">L = lim |aₙ₊₁/aₙ|</span><br><br>L < 1 → converges<br>L > 1 → diverges<br>L = 1 → inconclusive<br><br>Great for factorials & exponentials'},
+{q:"Root Test",a:'<span class="formula">L = lim |aₙ|^(1/n)</span><br><br>L < 1 → converges<br>L > 1 → diverges<br>L = 1 → inconclusive'},
+{q:"Integral Test",a:'If f is positive, continuous, decreasing:<br><span class="formula">Σ f(n) and ∫₁^∞ f(x)dx</span><br>both converge or both diverge.<br><br>Good for 1/(n·ln n), etc.'},
+{q:"Direct Comparison Test",a:'Compare aₙ to a known series bₙ:<br><br>If <span class="formula">aₙ ≤ bₙ</span> and Σbₙ converges → Σaₙ converges<br>If <span class="formula">aₙ ≥ bₙ</span> and Σbₙ diverges → Σaₙ diverges'},
+{q:"Limit Comparison Test",a:'<span class="formula">lim aₙ/bₙ = L</span> (finite, positive)<br><br>Then Σaₙ and Σbₙ both converge or both diverge.<br><br>Pick bₙ = dominant term of aₙ'},
+{q:"Alternating Series Test",a:'Σ(-1)ⁿ bₙ converges if:<br>1. <span class="formula">bₙ > 0</span><br>2. <span class="formula">bₙ is decreasing</span><br>3. <span class="formula">lim bₙ = 0</span>'},
+{q:"Absolute vs Conditional<br>Convergence",a:'<b>Absolute:</b> Σ|aₙ| converges<br>(implies Σaₙ converges too)<br><br><b>Conditional:</b> Σaₙ converges but Σ|aₙ| diverges<br><br>Example: Σ(-1)ⁿ/n is conditional'},
+{q:"Which test for factorials?",a:'<b>Ratio Test</b><br><br>(n+1)!/n! simplifies nicely'},
+{q:"Which test for<br>Σ 1/(n·ln n)?",a:'<b>Integral Test</b><br><br>∫ 1/(x ln x) dx = ln(ln x) → ∞<br>So it <b>diverges</b>'},
+]
+};
+
+let cur="Polar ↔ Rect",idx=0,flipped=false,known=new Set();
+const $=s=>document.getElementById(s);
+
+function buildTabs(){
+  const t=$("tabs");t.innerHTML="";
+  Object.keys(decks).forEach(k=>{
+    const b=document.createElement("button");
+    b.className="tab"+(k===cur?" active":"");
+    b.textContent=k;
+    b.onclick=()=>{cur=k;idx=0;flipped=false;known=new Set();buildTabs();render()};
+    t.appendChild(b);
+  });
+}
+
+function render(){
+  const d=decks[cur],c=d[idx];
+  $("card").classList.toggle("flipped",flipped);
+  $("ft").innerHTML=c.q;
+  $("bt").innerHTML=c.a;
+  $("ctr").textContent=`${idx+1} / ${d.length}`;
+  $("prog").style.width=((idx+1)/d.length*100)+"%";
+  $("score").textContent=`✓ ${known.size} / ${d.length} mastered`;
+}
+
+$("cc").onclick=()=>{flipped=!flipped;render()};
+$("prev").onclick=()=>{idx=(idx-1+decks[cur].length)%decks[cur].length;flipped=false;render()};
+$("next").onclick=()=>{idx=(idx+1)%decks[cur].length;flipped=false;render()};
+$("gotit").onclick=()=>{known.add(idx);idx=(idx+1)%decks[cur].length;flipped=false;render()};
+$("nope").onclick=()=>{known.delete(idx);idx=(idx+1)%decks[cur].length;flipped=false;render()};
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft")$("prev").click();
+  if(e.key==="ArrowRight")$("next").click();
+  if(e.key===" "){e.preventDefault();$("cc").click();}
+});
+
+buildTabs();render();
+</script>
+</body>
+</html>
